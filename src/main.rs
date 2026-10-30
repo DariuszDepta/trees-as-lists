@@ -1,33 +1,34 @@
 struct Node<T> {
     value: T,
-    level: usize,
     children: Vec<Self>,
 }
 
 impl<T> Node<T> {
-    fn new(value: T, level: usize) -> Self {
+    fn new(value: T) -> Self {
         Self {
             value,
-            level,
             children: Vec::default(),
         }
     }
 }
 
 fn build<T>(root: T, items: Vec<(T, usize)>) -> Node<T> {
-    let mut stack = vec![Node::new(root, 0)];
+    fn append_child<U>(stack: &mut Vec<(Node<U>, usize)>) {
+        let (child, _) = stack.pop().unwrap();
+        stack.last_mut().unwrap().0.children.push(child);
+    }
+
+    let mut stack = vec![(Node::new(root), 0)];
     for (value, level) in items {
-        while stack.last().is_some_and(|last| last.level >= level) {
-            let child = stack.pop().unwrap();
-            stack.last_mut().unwrap().children.push(child);
+        while stack.last().is_some_and(|(_, l)| *l >= level) {
+            append_child(&mut stack);
         }
-        stack.push(Node::new(value, level));
+        stack.push((Node::new(value), level));
     }
     while stack.len() > 1 {
-        let child = stack.pop().unwrap();
-        stack.last_mut().unwrap().children.push(child);
+        append_child(&mut stack);
     }
-    stack.pop().unwrap()
+    stack.pop().unwrap().0
 }
 
 fn display<T: std::fmt::Display>(node: &Node<T>, level: usize) {
