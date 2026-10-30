@@ -17,7 +17,8 @@ impl<T> Node<T> {
 fn build<T>(root: T, items: Vec<(T, usize)>) -> Node<T> {
     let mut stack = vec![Node::new(root, 0)];
     for (value, level) in items {
-        while let Some(child) = stack.pop_if(|last| last.level >= level) {
+        while stack.last().is_some_and(|last| last.level >= level) {
+            let child = stack.pop().unwrap();
             stack.last_mut().unwrap().children.push(child);
         }
         stack.push(Node::new(value, level));
