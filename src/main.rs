@@ -1,15 +1,10 @@
-use std::fmt::Display;
-
-struct Node<T>
-where
-    T: Display,
-{
+struct Node<T> {
     value: T,
     level: usize,
     children: Vec<Self>,
 }
 
-impl<T: Display> Node<T> {
+impl<T> Node<T> {
     fn new(value: T, level: usize) -> Self {
         Self {
             value,
@@ -19,14 +14,26 @@ impl<T: Display> Node<T> {
     }
 }
 
-impl<T: Display> Display for Node<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let indent = self.level * 2;
-        writeln!(f, "{:indent$}{}", "", self.value)?;
-        for child in &self.children {
-            write!(f, "{child}")?;
+fn build<T>(root: T, items: Vec<(T, usize)>) -> Node<T> {
+    let mut stack = vec![Node::new(root, 0)];
+    for (value, level) in items {
+        while let Some(child) = stack.pop_if(|last| last.level >= level) {
+            stack.last_mut().unwrap().children.push(child);
         }
-        Ok(())
+        stack.push(Node::new(value, level));
+    }
+    while stack.len() > 1 {
+        let child = stack.pop().unwrap();
+        stack.last_mut().unwrap().children.push(child);
+    }
+    stack.pop().unwrap()
+}
+
+fn display<T: std::fmt::Display>(node: &Node<T>, level: usize) {
+    let indent = level * 2;
+    println!("{:indent$}{}", "", node.value);
+    for child in &node.children {
+        display(child, level + 1);
     }
 }
 
@@ -44,21 +51,6 @@ fn main() {
         ("J", 3),
         ("K", 4),
     ];
-
-    let mut stack = vec![Node::new("ROOT", 0)];
-
-    for (value, level) in items {
-        while stack.last().is_some_and(|last| last.level >= level) {
-            let child = stack.pop().unwrap();
-            stack.last_mut().unwrap().children.push(child);
-        }
-        stack.push(Node::new(value, level));
-    }
-    while stack.len() > 1 {
-        let child = stack.pop().unwrap();
-        stack.last_mut().unwrap().children.push(child);
-    }
-
-    let root = stack.pop().unwrap();
-    print!("{root}");
+    let root = build("ROOT", items);
+    display(&root, 0);
 }
