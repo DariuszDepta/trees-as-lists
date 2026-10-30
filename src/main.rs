@@ -60,5 +60,5 @@ fn main() {
     }
 
     let root = stack.pop().unwrap();
-    println!("{root}");
+    print!("{root}");
 }
